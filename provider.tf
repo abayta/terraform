@@ -1,6 +1,6 @@
 provider "aws" {
-  access_key = ""
-  secret_key = ""
+  access_key = "${var.accesKey}"
+  secret_key = "${var.secretKey}"
   region     = "${var.region}"
 }
 
@@ -22,7 +22,7 @@ resource "aws_subnet" "testAws-public-1" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.0.0/24"
     map_public_ip_on_launch = "true"
-    availability_zone = "eu-west-3a"
+    availability_zone = "eu-central-1a"
 
     tags {
         Name = "testAws-public-1"
@@ -32,7 +32,7 @@ resource "aws_subnet" "testAws-public-2" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.1.0/24"
     map_public_ip_on_launch = "true"
-    availability_zone = "eu-west-3b"
+    availability_zone = "eu-central-1b"
 
     tags {
         Name = "testAws-public-2"
@@ -43,7 +43,7 @@ resource "aws_subnet" "testAws-private-1" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.2.0/24"
     map_public_ip_on_launch = "false"
-    availability_zone = "eu-west-3a"
+    availability_zone = "eu-central-1a"
 
     tags {
         Name = "testAws-private-1"
@@ -53,7 +53,7 @@ resource "aws_subnet" "testAws-private-2" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.3.0/24"
     map_public_ip_on_launch = "false"
-    availability_zone = "eu-west-3c"
+    availability_zone = "eu-central-1c"
 
     tags {
         Name = "testAws-private-2"
@@ -101,11 +101,11 @@ resource "aws_route_table_association" "testAws-public-2-a" {
 }
 resource "aws_route_table_association" "testAws-private-1-a" {
     subnet_id = "${aws_subnet.testAws-private-1.id}"
-    route_table_id = "${aws_route_table.testAws-public.id}"
+    route_table_id = "${aws_route_table.testAws-private.id}"
 }
 resource "aws_route_table_association" "testAws-private-1-b" {
     subnet_id = "${aws_subnet.testAws-private-2.id}"
-    route_table_id = "${aws_route_table.testAws-public.id}"
+    route_table_id = "${aws_route_table.testAws-private.id}"
 }
 
 # security groups
@@ -140,8 +140,8 @@ tags {
 
 # instances
 
-resource "aws_instance" "example" {
-  ami           = "ami-624bfd1f"
+resource "aws_instance" "privateweb" {
+  ami           = "${lookup(var.images, var.region)}"
   instance_type = "t2.micro"
   subnet_id = "${aws_subnet.testAws-private-1.id}"
   vpc_security_group_ids = ["${aws_security_group.webserver.id}"]
@@ -152,11 +152,12 @@ resource "aws_instance" "example" {
 }
 
 resource "aws_instance" "publiweb" {
-  ami           = "ami-624bfd1f"
+  ami           = "${lookup(var.images, var.region)}"
   instance_type = "t2.micro"
-  subnet_id = "${aws_subnet.testAws-public-1.id}"
+  subnet_id = "${aws_subnet.testAws-private-1.id}"
   vpc_security_group_ids = ["${aws_security_group.webserver.id}"]
   key_name = "${aws_key_pair.mykeypair.key_name}"
+
   tags {
     Name = "webserver-pub"
   }
