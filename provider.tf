@@ -22,7 +22,7 @@ resource "aws_subnet" "testAws-public-1" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.0.0/24"
     map_public_ip_on_launch = "true"
-    availability_zone = "eu-central-1a"
+    availability_zone = "${lookup(var.aza, var.region)}"
 
     tags {
         Name = "testAws-public-1"
@@ -32,7 +32,7 @@ resource "aws_subnet" "testAws-public-2" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.1.0/24"
     map_public_ip_on_launch = "true"
-    availability_zone = "eu-central-1b"
+    availability_zone = "${lookup(var.azb, var.region)}"
 
     tags {
         Name = "testAws-public-2"
@@ -43,7 +43,7 @@ resource "aws_subnet" "testAws-private-1" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.2.0/24"
     map_public_ip_on_launch = "false"
-    availability_zone = "eu-central-1a"
+    availability_zone = "${lookup(var.aza, var.region)}"
 
     tags {
         Name = "testAws-private-1"
@@ -53,7 +53,7 @@ resource "aws_subnet" "testAws-private-2" {
     vpc_id = "${aws_vpc.testAws.id}"
     cidr_block = "10.0.3.0/24"
     map_public_ip_on_launch = "false"
-    availability_zone = "eu-central-1c"
+    availability_zone = "${lookup(var.azc, var.region)}"
 
     tags {
         Name = "testAws-private-2"
@@ -165,7 +165,7 @@ resource "aws_instance" "publiweb" {
 
 # key
 resource "aws_key_pair" "mykeypair" {
-  key_name = "aba"
+  key_name = "corekey"
   public_key = "${file("${var.PATH_TO_PUBLIC_KEY}")}"
 }
 
