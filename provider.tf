@@ -140,32 +140,69 @@ tags {
 
 # instances
 
-resource "aws_instance" "privateweb" {
+resource "aws_instance" "publicweb1" {
   ami           = "${lookup(var.images, var.region)}"
   instance_type = "t2.micro"
-  subnet_id = "${aws_subnet.testAws-private-1.id}"
+  subnet_id = "${aws_subnet.testAws-public-1.id}"
   vpc_security_group_ids = ["${aws_security_group.webserver.id}"]
   key_name = "${aws_key_pair.mykeypair.key_name}"
   tags {
-    Name = "webserver-pri"
+    Name = "webserver1"
   }
 }
 
-resource "aws_instance" "publiweb" {
+resource "aws_instance" "publiweb2" {
   ami           = "${lookup(var.images, var.region)}"
   instance_type = "t2.micro"
-  subnet_id = "${aws_subnet.testAws-private-1.id}"
+  subnet_id = "${aws_subnet.testAws-public-2.id}"
   vpc_security_group_ids = ["${aws_security_group.webserver.id}"]
   key_name = "${aws_key_pair.mykeypair.key_name}"
 
   tags {
-    Name = "webserver-pub"
+    Name = "webserver2"
   }
 }
 
 # key
 resource "aws_key_pair" "mykeypair" {
-  key_name = "corekey"
+  key_name = "corekey2"
   public_key = "${file("${var.PATH_TO_PUBLIC_KEY}")}"
 }
 
+resource "aws_lb" "webserver" {
+  name = "Alb1"
+  internal = false
+  load_balancer_type = "application"
+  security_groups = ["${aws_security_group.webserver.id}"]
+  subnets = ["${aws_subnet.testAws-public-1.id}" , "${aws_subnet.testAws-public-2.id}"]
+}
+
+resource "aws_lb_target_group" "webserver" {
+  name = "target_group"
+  port = 80
+  protocol = "HTTP"
+  vpc_id = "${aws_vpc.testAws.id}"
+}
+
+resource "aws_lb_listener" "webserver" {
+  load_balancer_arn = "${aws_lb.webserver.arn}"
+  port = 80
+  protocol = "HTTP"
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.webserver.arn}"
+    type = "forward"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "webserver1" {
+  target_group_arn = "${aws_lb_target_group.webserver.arn}"
+  target_id = "${aws_instance.publicweb1.id}"
+  port = 80
+}
+
+resource "aws_lb_target_group_attachment" "webserver2" {
+  target_group_arn = "${aws_lb_target_group.webserver.arn}"
+  target_id = "${aws_instance.publiweb2.id}"
+  port = 80
+}
